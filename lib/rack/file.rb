@@ -23,16 +23,14 @@ module Rack
       dup._call(env)
     end
 
-    F = ::File
-
     def _call(env)
       @path_info = Utils.unescape(env["PATH_INFO"])
       return forbidden  if @path_info.include? ".."
 
-      @path = F.join(@root, @path_info)
+      @path = ::File.join(@root, @path_info)
 
       begin
-        if F.file?(@path) && F.readable?(@path)
+        if ::File.file?(@path) && ::File.readable?(@path)
           serving
         else
           raise Errno::EPERM
@@ -56,16 +54,16 @@ module Rack
     #   we're at it we also use this as body then.
 
     def serving
-      if size = F.size?(@path)
+      if size = ::File.size?(@path)
         body = self
       else
-        body = [F.read(@path)]
+        body = [::File.read(@path)]
         size = Utils.bytesize(body.first)
       end
 
       [200, {
-        "Last-Modified"  => F.mtime(@path).httpdate,
-        "Content-Type"   => Mime.mime_type(F.extname(@path), 'text/plain'),
+        "Last-Modified"  => ::File.mtime(@path).httpdate,
+        "Content-Type"   => Mime.mime_type(::File.extname(@path), 'text/plain'),
         "Content-Length" => size.to_s
       }, body]
     end
@@ -78,7 +76,7 @@ module Rack
     end
 
     def each
-      F.open(@path, "rb") { |file|
+      ::File.open(@path, "rb") { |file|
         while part = file.read(8192)
           yield part
         end
